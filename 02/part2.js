@@ -1,4 +1,4 @@
-const lineReader = require("./utils.js").lineReader
+const lineReader = require("../utils/utils.js").lineReader
 
 main();
 

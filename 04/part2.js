@@ -1,17 +1,27 @@
 const utils = require("../utils/utils.js");
-
-const lineReader = utils.lineReader;
-const parseCommand = utils.parseCommand;
-const subMarine = utils.getSubmarine();
+const bingoEngine = require("./bingoEngine.js");
+const readFile = utils.readFile;
 
 main();
 
 function main() {
-  lineReader('input.txt', line => {
-    const command = parseCommand(line);
-    subMarine.executeCommand(command);
-    console.log('x: ' + subMarine.xPos + ', depth: ' + subMarine.depth);
-  }, (lines) => {
-    console.log('Final position: x: ' + subMarine.xPos + ' depth: ' + subMarine.depth + ' x * depth: ' + subMarine.xPos * subMarine.depth);
+  readFile('input.txt', fileContent => {
+    const numbers = bingoEngine.getNumbersArray(fileContent);
+    const boards = bingoEngine.getBoards(fileContent);
+    for(let number of numbers) {
+      for(let board of boards) {
+        if (board.hasBingo()) {
+          continue;
+        }
+
+        board.mark(number);
+        if (board.hasBingo()) {
+          console.log(board.id + ' got BINGO!');
+          console.log('Score: ' + board.getScore(number));
+          console.log('Last called number: ' + number);
+          bingoEngine.drawBoard(board);
+        }
+      }
+    }
   });
 }

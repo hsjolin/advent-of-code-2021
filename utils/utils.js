@@ -42,6 +42,16 @@ module.exports = class Utils {
       });
   }
 
+  static readFile(file, completeCallback) {
+    fs.readFile(file, 'utf8' , (err, data) => {
+      if (err) {
+        console.error(err)
+        return
+      }
+      completeCallback(data);
+    });
+  }
+
   static parseCommand(str) {
     const cmdRegex = /^([a-z]+)\s([\d]+)$/
     const matches = str.match(cmdRegex);

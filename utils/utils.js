@@ -52,6 +52,14 @@ module.exports = class Utils {
     });
   }
 
+  static fileWriter(file, data) {
+    fs.writeFile(file, data, err => {
+      if (err) {
+        console.warn(err);
+      }
+    });
+  }
+
   static parseCommand(str) {
     const cmdRegex = /^([a-z]+)\s([\d]+)$/
     const matches = str.match(cmdRegex);

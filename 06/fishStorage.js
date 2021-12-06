@@ -1,71 +1,53 @@
-const utils = require("../utils/utils.js");
-const lineReader = utils.lineReader;
-const fileWriter = utils.fileWriter;
-const appendFile = utils.appendFile;
-const replaceFile = utils.replaceFile;
-
 var fishStorage = {
   storageCount: 0,
-  transCount: 0,
-  storage: [],
-  trans: [],
-  maxLength: 100000,
-  // maxLength: 2147483646,
-  push: function(fish) {
-    this._push(fish);
+  newborns: 0,
+  breeded: 0,
+  storage: [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  push: function(fishIndex, count) {
+    if (!count) {
+      count = 1;
+    }
+
+    if (fishIndex == 8) {
+      this.newborns += count;
+    } else if (fishIndex == 6) {
+      this.breeded += count;
+    } else {
+      this.storage[fishIndex] += count;
+    }
   },
   pop: function() {
-    return this._pop();
-  },
-  commit: function() {
-    this.storage = this.trans;
-    this.trans = null;
-    this.storageCount = this.transCount;
-    this.transCount = 0;
-  },
-  _push: function(fish) {
-    if (this.trans == null) {
-      this.trans = [];
-    }
-
-    let storageArr = this.trans;
-
-    if (storageArr.length == 0) {
-      storageArr.push([]);
-    }
-
-    let currentIndex = storageArr.length - 1;
-    let currentArr = storageArr[currentIndex];
-    if (currentArr.length >= this.maxLength) {
-      currentArr = [];
-      storageArr.push(currentArr);
-      currentIndex++;
-    }
-
-    this.transCount++;
-    currentArr.push(fish);
-  },
-  _pop: function() {
-    if (this.storageCount == 0) {
+    if (this.storage[0] == 0) {
       return null;
     }
 
-    let storageArr = this.storage;
-    let currentIndex = storageArr.length - 1;
-    let currentArr = storageArr[currentIndex];
-    if (currentArr.length == 0) {
-      storageArr.pop();
-      currentIndex--;
-      if (currentIndex == 0) {
-        return null;
-      }
+    let breedable = this.storage[0];
+    this.storage[0] = 0;
 
-      currentArr = storageArr[currentIndex];
+    return breedable;
+  },
+  commit: function() {
+    if (this.storage[0] > 0) {
+      throw this.storage[0] + " fishes left!"
     }
 
-    this.storageCount--;
-    return currentArr.pop();
-  }
+    this.storage.splice(0, 1);
+    this.storage.push(this.newborns);
+    this.storage[6] += this.breeded;
+    this.newborns = 0;
+    this.breeded = 0;
+    this.storageCount = this.storage.reduce((x, y) => x + y, 0);
+  },
 }
 
 module.exports = fishStorage;

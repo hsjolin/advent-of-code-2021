@@ -7,46 +7,22 @@ var seabed = {
   load: function(file, completeCallback) {
     lineReader(file, (line) => {
       }, lines => {
-        let fishes = [];
         const regex = /\d/g;
         let match;
         while (match = regex.exec(lines[0])) {
           fishStorage.push(parseInt(match[0]));
         }
-
-        fishStorage.commit();
-        console.log('Loaded ' + fishStorage.storageCount + ' fishes');
         completeCallback();
       });
   },
   tick: function() {
-    let breedTimer = fishStorage.pop();
-    while(breedTimer != null) {
-      let fish = this.createFish(breedTimer);
-      fish.tick();
-      if (fish.canBreed()) {
-        fish.breed();
-        fishStorage.push(8);
-      }
-
-      fishStorage.push(fish.breedTimer);
-      breedTimer = fishStorage.pop();
+    let fishesReadyToBreed = fishStorage.pop();
+    if (fishesReadyToBreed != null) {
+      fishStorage.push(8, fishesReadyToBreed);
+      fishStorage.push(6, fishesReadyToBreed);
     }
+    
     fishStorage.commit();
-  },
-  createFish(timer) {
-    return {
-      breedTimer: timer,
-      tick: function() {
-        this.breedTimer--;
-      },
-      breed: function() {
-        this.breedTimer = 6;
-      },
-      canBreed: function() {
-        return this.breedTimer < 0;
-      }
-    }
   }
 }
 

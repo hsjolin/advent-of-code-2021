@@ -52,12 +52,21 @@ module.exports = class Utils {
     });
   }
 
+  static readFileSync(file) {
+    return fs.readFileSync(file, 'utf8');
+  }
+
   static fileWriter(file, data) {
-    fs.writeFile(file, data, err => {
-      if (err) {
-        console.warn(err);
-      }
-    });
+    fs.writeFileSync(file, data);
+  }
+
+  static appendFile(file, data) {
+    fs.appendFileSync(file, data, 'utf8');
+  }
+
+  static replaceFile(target, source) {
+    fs.unlinkSync(target);
+    fs.renameSync(source, target);
   }
 
   static parseCommand(str) {

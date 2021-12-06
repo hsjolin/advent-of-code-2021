@@ -4,12 +4,12 @@ const readFile = utils.readFile;
 
 main();
 
-async function main() {
-  seabed.load('input.txt', async () => {
+function main() {
+  seabed.load('input.txt', () => {
     for (let day = 0; day < 80; day++) {
-      await seabed.tick();
+      seabed.tick();
     }
 
-    console.log('Number of fishes after 80 days: ' + seabed.numberOfFishes);
+    console.log('Number of fishes after 80 days: ' + seabed.numberOfFishes());
   });
 }

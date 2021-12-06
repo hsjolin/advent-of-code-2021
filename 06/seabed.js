@@ -1,54 +1,38 @@
 const utils = require("../utils/utils.js");
+const fishStorage = require("./fishStorage.js");
 const lineReader = utils.lineReader;
-const fileWriter = utils.fileWriter;
-const appendFile = utils.appendFile;
-const replaceFile = utils.replaceFile;
 
 var seabed = {
-  numberOfFishes: 0,
+  numberOfFishes: function() { return fishStorage.storageCount; },
   load: function(file, completeCallback) {
     lineReader(file, (line) => {
       }, lines => {
-        fileWriter('fishes.txt', lines[0]);
-        completeCallback();
-      });
-  },
-  tick: async function() {
-    this.numberOfFishes = 0;
-    return new Promise(resolve => {
-      lineReader('fishes.txt', line => {
         let fishes = [];
         const regex = /\d/g;
         let match;
-        while (match = regex.exec(line)) {
-          fishes.push(this.createFish(parseInt(match[0])));
+        while (match = regex.exec(lines[0])) {
+          fishStorage.push(parseInt(match[0]));
         }
 
-        fishes.forEach(fish => {
-          fish.tick();
-        });
-
-        let fishesReadyToBreed = fishes.filter(fish => fish.canBreed());
-        fishesReadyToBreed.forEach(fish => {
-          fish.breed();
-          fishes.push(this.createFish(8));
-        });
-
-        let lineSize = 1000000;
-        for(let i = 0; i < fishes.length; i += lineSize) {
-          appendFile('fishes.tmp',
-            fishes
-              .slice(i, i + lineSize)
-              .map(fish => fish.breedTimer)
-              .join() + '\r\n');
-        }
-
-        this.numberOfFishes += fishes.length;
-      }, lines => {
-        replaceFile('fishes.txt', 'fishes.tmp');
-        resolve();
+        fishStorage.commit();
+        console.log('Loaded ' + fishStorage.storageCount + ' fishes');
+        completeCallback();
       });
-    });
+  },
+  tick: function() {
+    let breedTimer = fishStorage.pop();
+    while(breedTimer != null) {
+      let fish = this.createFish(breedTimer);
+      fish.tick();
+      if (fish.canBreed()) {
+        fish.breed();
+        fishStorage.push(8);
+      }
+
+      fishStorage.push(fish.breedTimer);
+      breedTimer = fishStorage.pop();
+    }
+    fishStorage.commit();
   },
   createFish(timer) {
     return {

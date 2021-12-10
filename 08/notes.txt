@@ -1,0 +1,95 @@
+1: 2*
+2: 5
+3: 5
+4: 4*
+5: 5
+6: 6
+7: 3*
+8: 7*
+9: 6
+0: 6
+
+be
+ ....
+.    b
+.    b
+ ....
+.    e
+.    e
+ ....
+
+ abcdf
+  dddd
+ .    b
+ .    b
+  cccc
+ a    .
+ a    .
+  ffff
+
+ abcdf
+  dddd
+ .    b
+ .    b
+  cccc
+ a    .
+ a    .
+  ffff
+
+edb
+ dddd
+.    b
+.    b
+ ....
+.    e
+.    e
+ ....
+
+cgeb
+ ....
+g    b
+g    b
+ cccc
+.    e
+.    e
+ ....
+
+cfbegad
+ aaaa
+b    c
+b    c
+ dddd
+e    f
+e    f
+ gggg
+
+d -> diff 0 & 8
+e -> diff 8 & 9
+c -> diff 8 & 6
+
+be      1*
+fabcd   2*
+fdcge   3*
+cgeb    4*
+fecdb   5*
+fgaecd  6*
+edb     7*
+cfbegad 8*
+agebfd  9*
+cbdgef  0*
+
+0: unika: 1, 4, 7, 8
+1: 2 & 5 -> 2
+2: 9 & 0 -> 2
+3: 6 & 9 -> 2
+4: 0 & 8 -> 1
+5: 3 & 2 -> 1
+
+F är släckt endast för bokstaven 2
+C är den andra i bokstaven 1 som inte ingår i 2
+A är den tredje bokstaven förutom de två som finns i 1
+C saknas i bokstaven 6
+Bokstaven 9 och bokstaven 6 skiljer sig med en
+Bokstaven 0 är den med 7 bokstäver som är kvar
+C ingår i bokstaven 3
+Bokstaven 5 är den som är kvar

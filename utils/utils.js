@@ -52,6 +52,29 @@ module.exports = class Utils {
     });
   }
 
+  static parseFile(file, regex, matchCallback, completeCallback) {
+    const fileStream = fs.createReadStream(file);
+    const lineReader = readLine.createInterface({
+      input: fileStream,
+      crlfDelay: Infinity
+    });
+
+    const results = [];
+    lineReader
+      .on('line', line => {
+        const match = line.match(regex);
+
+        if (match) {
+          results.push(matchCallback(match));
+        }
+      })
+      .on('close', () => {
+        if (completeCallback) {
+          completeCallback(results);
+        }
+      });
+  }
+
   static readFileSync(file) {
     return fs.readFileSync(file, 'utf8');
   }

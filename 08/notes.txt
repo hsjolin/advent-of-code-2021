@@ -85,11 +85,23 @@ cbdgef  0*
 4: 0 & 8 -> 1
 5: 3 & 2 -> 1
 
-F är släckt endast för bokstaven 2
-C är den andra i bokstaven 1 som inte ingår i 2
-A är den tredje bokstaven förutom de två som finns i 1
+1: 2
+2: 5
+3: 5
+4: 4
+5: 5
+6: 6
+7: 3
+8: 7
+9: 6
+0: 6
+
+
+F saknas endast i bokstaven 2
+C är bokstaven i 1 som inte ingår i 2
+A är den tredje bokstaven i 7 förutom de två som finns i 1
 C saknas i bokstaven 6
-Bokstaven 9 och bokstaven 6 skiljer sig med en
-Bokstaven 0 är den med 7 bokstäver som är kvar
+Bokstav 4 ingår helt i bokstav 9
+Bokstaven 0 är den med 6 bokstäver som är kvar
 C ingår i bokstaven 3
 Bokstaven 5 är den som är kvar

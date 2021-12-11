@@ -3,8 +3,8 @@ const display = require("./display.js");
 main();
 
 function main() {
-  display.load('test.txt', () => {
+  display.load('input.txt', () => {
     display.verifyData();
-    // display.draw();
+    console.log(display.part2());
   });
 }

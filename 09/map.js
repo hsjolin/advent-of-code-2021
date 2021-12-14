@@ -66,10 +66,6 @@ var map = {
         item.basin = true;
         item.basinSize = basin.length + 1;
 
-        if (item.basinSize > 92) {
-          console.log(item);
-        }
-
         basin.forEach(element => {
           element.basin = true;
         });
@@ -81,7 +77,10 @@ var map = {
       .sort((a, b) => b.basinSize - a.basinSize)
       .slice(0, 3);
     
-    // console.log(threeLargest);
+    console.log(threeLargest);
+    console.log(threeLargest
+      .map(p => p.basinSize)
+      .reduce((a, b) => a * b));
   },
   adjacentRecursive: function(currentPoint) {
     let result = [];
@@ -93,8 +92,8 @@ var map = {
     result.push(...adjacent);
     currentPoint.visited = true;
 
+    adjacent.forEach(p => p.visited = true);
     for (let point of adjacent) {
-      point.visited = true;
       result.push(...this.adjacentRecursive(point));
     }
 

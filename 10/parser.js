@@ -1,53 +1,74 @@
 const utils = require("../utils/utils.js");
-
 const lineReader = utils.lineReader;
 
 var parser = {
-  chunks: [],
+  points: 0,
+  points2: 0,
+  currentLine: null,
   load: function(file, completeCallback) {
     lineReader(
       file,
       line => {
+        // this.currentLine = line;
+        // let indexes = '';
+        // for (let i = 0; i < line.length; i++) {
+        //   indexes += i < 10 
+        //     ? '0' + i + ' '
+        //     : i + ' ';
+        // }
+        // console.log(indexes);
+        // console.log([...line].join('  '));
+
         try {
-          console.log(this.parseRecursive(line, 0, 0));
+          this.parseRecursive(0);
+          console.log(this.currentLine);
         } catch (error) {
-          console.log('Error on line ' + line, error);
+          // console.log(error + ' - Line: ' + line);
+          // console.log('');
         }
       },
       results => {
+        console.log(this.points);
+        console.log(this.points2);
         completeCallback();
       }
     )
   },
-  parseRecursive: function (expr, currentIndex) {
-    const chunks = [];
-    
-    let openingBracket = expr[currentIndex];
-    if (this.isClosingBracket(openingBracket)) {
-      throw 'Expected a opening bracket but found \'' + expr[currentIndex] + '\'';
+  parseRecursive: function (currentIndex) {
+    let expr = this.currentLine;
+
+    if (expr.length <= currentIndex) {
+      // console.log('Reached EOL.');
+      return -1;
     }
 
-    let expectedClosingBracket = this.getClosingBracketFor(openingBracket);
-    if (expr.length == currentIndex + 1) {
-      throw 'This row is incomplete. Expected a \'' + expectedClosingBracket 
-        + '\' or an opening bracket but got nothing. Line: ' + expr;
+    const currentChar = expr[currentIndex];
+    if (this.isClosingBracket(currentChar)) {
+      return currentIndex;
     }
 
-    for (let i = currentIndex; i < expr.length; i++) {
-      let char = expr[i + 1];
-      
-      if (this.bracketsEqualish(openingBracket, char)) {
-        chunks.push(openingBracket + '' + expectedClosingBracket);
-        break;
-      } else if (!this.isClosingBracket(char)) {
-        chunks.push(...this.parseRecursive(expr, currentIndex + 1));
-      } else {
-        throw 'Syntax error on index ' + (currentIndex + i) + '. Expected \'' 
-        + expectedClosingBracket + '\' got \'' + char + '\'';
-      }
+    const expectedClosingBracket = this.getClosingBracketFor(currentChar);
+    let closingBracketIndex = this.parseRecursive(expr, currentIndex + 1);
+
+    if (closingBracketIndex == -1) {
+      // Incomplete line.
+      closingBracketIndex = expr.length;
+      expr = expr + expectedClosingBracket;
+      this.calculatePoints2(expectedClosingBracket);
     }
 
-    return chunks;
+    const closingBracket = expr[closingBracketIndex];
+
+    if (closingBracket != expectedClosingBracket) {
+      this.calculatePoints(closingBracket);
+      throw 'Syntax error on index ' + currentIndex + '. Expected \'' 
+        + expectedClosingBracket + '\' got the \'' + closingBracket + '\' on index ' + closingBracketIndex;
+    } else {
+      // console.log('Found a chunk on index ' + currentIndex + ', ' + closingBracketIndex + ': ' 
+      //   + expr.substring(currentIndex, closingBracketIndex + 1));
+    }
+
+    return this.parseRecursive(expr, closingBracketIndex + 1);
   },
   part1: function() {
   },
@@ -70,11 +91,27 @@ var parser = {
         throw 'Invalid character found: \'' + char + '\'';
     }
   },
-  bracketsEqualish: (a, b) => {
-    return a == '(' && b == ')'
-      || a == '[' && b == ']'
-      || a == '{' && b == '}'
-      || a == '<' && b == '>';
+  calculatePoints: function (char) {
+    if(char ==  ')') {
+      this.points += 3;
+    } else if (char == ']') {
+      this.points += 57;
+    } else if (char == '}') {
+      this.points += 1197;
+    } else if (char == '>') {
+      this.points += 25137;
+    }
+  },
+  calculatePoints2: function (char) {
+    if(char ==  ')') {
+      this.points2 += 1;
+    } else if (char == ']') {
+      this.points2 += 2;
+    } else if (char == '}') {
+      this.points2 += 3;
+    } else if (char == '>') {
+      this.points2 += 4;
+    }
   }
 }
 

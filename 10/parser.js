@@ -6,10 +6,11 @@ var parser = {
   points2: 0,
   currentLine: null,
   load: function(file, completeCallback) {
+    let lineScores = [];
     lineReader(
       file,
       line => {
-        // this.currentLine = line;
+        this.currentLine = line;
         // let indexes = '';
         // for (let i = 0; i < line.length; i++) {
         //   indexes += i < 10 
@@ -22,42 +23,47 @@ var parser = {
         try {
           this.parseRecursive(0);
           console.log(this.currentLine);
+          lineScores.push(this.points2);
+          this.points2 = 0;
         } catch (error) {
-          // console.log(error + ' - Line: ' + line);
-          // console.log('');
+          console.log(error + ' - Line: ' + line);
+          console.log('');
         }
       },
       results => {
         console.log(this.points);
-        console.log(this.points2);
+        lineScores.sort((a, b) => {
+          return a - b;
+        });
+        console.log(lineScores
+          .slice(lineScores.length / 2, lineScores.length / 2 + 1)[0]);
+
         completeCallback();
       }
     )
   },
   parseRecursive: function (currentIndex) {
-    let expr = this.currentLine;
-
-    if (expr.length <= currentIndex) {
+    if (this.currentLine.length <= currentIndex) {
       // console.log('Reached EOL.');
       return -1;
     }
 
-    const currentChar = expr[currentIndex];
+    const currentChar = this.currentLine[currentIndex];
     if (this.isClosingBracket(currentChar)) {
       return currentIndex;
     }
 
+    let closingBracketIndex = this.parseRecursive(currentIndex + 1);
     const expectedClosingBracket = this.getClosingBracketFor(currentChar);
-    let closingBracketIndex = this.parseRecursive(expr, currentIndex + 1);
 
     if (closingBracketIndex == -1) {
       // Incomplete line.
-      closingBracketIndex = expr.length;
-      expr = expr + expectedClosingBracket;
+      closingBracketIndex = this.currentLine.length;
+      this.currentLine += expectedClosingBracket;
       this.calculatePoints2(expectedClosingBracket);
-    }
+    } 
 
-    const closingBracket = expr[closingBracketIndex];
+    const closingBracket = this.currentLine[closingBracketIndex];
 
     if (closingBracket != expectedClosingBracket) {
       this.calculatePoints(closingBracket);
@@ -65,19 +71,19 @@ var parser = {
         + expectedClosingBracket + '\' got the \'' + closingBracket + '\' on index ' + closingBracketIndex;
     } else {
       // console.log('Found a chunk on index ' + currentIndex + ', ' + closingBracketIndex + ': ' 
-      //   + expr.substring(currentIndex, closingBracketIndex + 1));
+      //   + this.currentLine.substring(currentIndex, closingBracketIndex + 1));
     }
 
-    return this.parseRecursive(expr, closingBracketIndex + 1);
+    return this.parseRecursive(closingBracketIndex + 1);
   },
   part1: function() {
   },
   part2: function() {
   },
-  isClosingBracket: char => {
+  isClosingBracket: function(char) {
     return ")]}>".indexOf(char) > -1;
   },
-  getClosingBracketFor: (char) => {
+  getClosingBracketFor: function(char) {
     switch (char) {
       case '(': 
         return ')';
@@ -88,7 +94,7 @@ var parser = {
       case '<':
         return '>';
       default:
-        throw 'Invalid character found: \'' + char + '\'';
+        throw 'getClosingBracketFor: Invalid character found: \'' + char + '\'';
     }
   },
   calculatePoints: function (char) {
@@ -100,9 +106,12 @@ var parser = {
       this.points += 1197;
     } else if (char == '>') {
       this.points += 25137;
+    } else {
+      throw 'calculatePoints: Invalid character found: \'' + char + '\'';
     }
   },
   calculatePoints2: function (char) {
+    this.points2 = this.points2 * 5;
     if(char ==  ')') {
       this.points2 += 1;
     } else if (char == ']') {

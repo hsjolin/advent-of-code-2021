@@ -1,10 +1,9 @@
-const map = require("./map.js");
+const parser = require("./parser.js");
 
 main();
 
 function main() {
-  map.load('input.txt', () => {
-    map.part2();
-    map.draw();
+  parser.load('./10/input.txt', () => {
+    console.log(parser.part2());
   });
 }

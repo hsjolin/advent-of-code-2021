@@ -1,9 +1,12 @@
-const parser = require("./parser.js");
-
-main();
+const pathEngine = require('./paths2.js');
+let arr = [];
 
 function main() {
-  parser.load('./10/input.txt', () => {
-    console.log(parser.part2());
+  pathEngine.load('./12/input.txt', (data) => {
+    const paths = pathEngine.evaluate();
+    console.log(paths.join('\n'));
+    console.log('Total number of paths: ' + paths.length);
   });
 }
+
+main();

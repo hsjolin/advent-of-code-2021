@@ -35,36 +35,40 @@ var pathEngine = {
       to.connections.push(from);
       from.connections.push(to);
     },
-    () => {
-      completeCallback(this.caves);
-    });
+      () => {
+        completeCallback(this.caves);
+      });
   },
   evaluate: function () {
     const startPoint = this.caves.find(cave => cave.name == 'start');
     const endPoint = this.caves.find(cave => cave.name == 'end');
-    const paths = this.findPaths(startPoint, endPoint, startPoint.name);
 
+    const paths = this.findPaths(startPoint, endPoint, startPoint.name, true);
     return paths;
   },
-  findPaths(current, end, path) {
+  findPaths(current, end, path, extraVisit) {
     if (current == end) {
       return [path];
     }
 
-    const availableCaves = current.connections.filter(c => 
-      path.indexOf(c.name) > -1 && c.multipleVisits 
+    const availableCaves = current.connections.filter(c =>
+      path.indexOf(c.name) > -1 && c.multipleVisits
       || path.indexOf(c.name) == -1);
-    
-    if (availableCaves.length == 0) {
-      return null;
-    }
+
+    const extra = extraVisit
+      ? current.connections.filter(c =>
+        path.indexOf(c.name) > -1 && !c.multipleVisits && c.name != 'start' && c.name != 'end')
+      : [];
 
     const paths = [];
     for (cave of availableCaves) {
-      const p = this.findPaths(cave, end, [path, cave.name].join('-'));
-      if (p) {
-        paths.push(...p);
-      }
+      const p = this.findPaths(cave, end, [path, cave.name].join('-'), extraVisit);
+      paths.push(...p);
+    }
+
+    for (cave of extra) {
+      const p = this.findPaths(cave, end, [path, cave.name].join('-'), false);
+      paths.push(...p);
     }
 
     return paths;

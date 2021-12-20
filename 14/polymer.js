@@ -60,17 +60,17 @@ var polymer = {
     });
   },
   step: function () {
-    const current = this.charCount;
-    const pairCount = current.pairs.length;
+    const current = {
+      pairs: [],
+      chars: this.charCount.chars,
+      total: 0
+    };
+
+    const last = this.charCount;
+    const pairCount = last.pairs.length;
+
     for (let i = 0; i < pairCount; i++) {
-      const pair = current.pairs[i];
-      console.log(pair);
-
-      if (pair.count == 0) {
-        continue;
-      }
-
-      current.pairs[i].count = 0;
+      const pair = last.pairs[i];
       const char = this.rules[pair.name];
 
       if (!current.chars[char]) {
@@ -81,10 +81,15 @@ var polymer = {
 
       this.createPair(current, char + pair.name[1], pair.count);
       this.createPair(current, pair.name[0] + char, pair.count);
-      // current.total += pair.count;
     }
 
     this.stepCount++;
+    current.total = current.pairs
+      .map(p => p.count)
+      .reduce((a, b) => a + b) + 1;
+    
+    this.charCount = current;
+
     return current;
   },
   count: function () {
@@ -96,7 +101,6 @@ var polymer = {
       .find(p => p.name == newPairName);
 
     if (!newPair) {
-      console.log(newPairName);
       newPair = {
         name: newPairName,
         count: count

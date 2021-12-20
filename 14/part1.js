@@ -1,15 +1,15 @@
 const polymer = require('./polymer.js');
 
 function main() {
-  polymer.load('./14/input.txt', (data) => {
+  polymer.load('./14/test.txt', (data) => {
     const ref = setInterval(() => {
-      console.log(polymer.step());
-      if (polymer.results.length == 11) {
+      polymer.step();
+      if (polymer.stepCount == 10) {
         clearInterval(ref);
-        console.log('Number of steps: ' + (polymer.results.length - 1));
-        console.log(polymer.count());
+        console.log('Number of steps: ' + (polymer.stepCount));
+        console.log(polymer.charCount);
       }
-    }, 1000);
+    }, 100);
   });
 }
 

@@ -2,9 +2,8 @@ const utils = require('../utils/utils.js');
 const parseFile = utils.parseFile;
 
 var polymer = {
-  template: null,
   rules: {},
-  charCount: {},
+  charCount: null,
   stepCount: 0,
   load: function (file, completeCallback) {
     parseFile(file, /([A-Z]{3,})|([A-Z]{2}) -> ([A-Z])/, match => {
@@ -17,7 +16,39 @@ var polymer = {
       const char = match[3];
 
       if (template) {
-        this.template = template;
+        const pairs = [];
+        const chars = {};
+        for (let i = 0; i < template.length - 1; i++) {
+          const pair = template[i] + template[i + 1];
+
+          let currentPair = pairs
+            .find(p => p.name == pair);
+
+          if (!currentPair) {
+            currentPair = {
+              name: pair,
+              count: 1
+            }
+
+            pairs.push(currentPair);
+          } else {
+            currentPair.count++;
+          }
+        }
+
+        for (const char of template) {
+          if (!chars[char]) {
+            chars[char] = 1;
+          } else {
+            chars[char]++;
+          }
+        }
+
+        this.charCount = {
+          pairs,
+          chars,
+          total: template.length
+        };
       }
 
       if (rule && char) {
@@ -29,27 +60,52 @@ var polymer = {
     });
   },
   step: function () {
-    let totalLength = this.template.length;
-    for (let i = 0; i < this.charCount.length; i++) {
-      totalLength += this.charCount[i];
-    }
+    const current = this.charCount;
+    const pairCount = current.pairs.length;
+    for (let i = 0; i < pairCount; i++) {
+      const pair = current.pairs[i];
+      console.log(pair);
 
-    for (let i = 0; i < totalLength - 1; i++) {
-      const pair = template[i] + template[i + 1];
-      const char = this.rules[pair];
-
-      let charCount = this.charCount[char];
-      if (!charCount) {
-        this.charCount[char] = 1;
-      } else {
-        this.charCount[char]++;
+      if (pair.count == 0) {
+        continue;
       }
+
+      current.pairs[i].count = 0;
+      const char = this.rules[pair.name];
+
+      if (!current.chars[char]) {
+        current.chars[char] = 0;
+      }
+
+      current.chars[char] += pair.count;
+
+      this.createPair(current, char + pair.name[1], pair.count);
+      this.createPair(current, pair.name[0] + char, pair.count);
+      // current.total += pair.count;
     }
 
     this.stepCount++;
+    return current;
   },
   count: function () {
     return this.charCount;
+  },
+  createPair: function (current, newPairName, count) {
+    let newPair = current.pairs
+      .map(p => p)
+      .find(p => p.name == newPairName);
+
+    if (!newPair) {
+      console.log(newPairName);
+      newPair = {
+        name: newPairName,
+        count: count
+      };
+
+      current.pairs.push(newPair);
+    } else {
+      newPair.count += count;
+    }
   }
 }
 

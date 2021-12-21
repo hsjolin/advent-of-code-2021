@@ -5,7 +5,8 @@ const djikstras = {
         const destinationNode = options.destinationNode;
         startNode.explored = true;
         startNode.totalDistance = 0;
-        destinationNode.distance = 0;
+        startNode.distance = 0;
+        // destinationNode.distance = 0;
         startNode.adjacentNodes.forEach(adjecent => {
             this.estimateNode(startNode, adjecent);
         });
@@ -60,7 +61,7 @@ const djikstras = {
     draw(result) {
         return result
             .reverse()
-            .map(node => '(' + node.x + ', ' + node.y + ') Total distance: ' + node.totalDistance + '\r\n')
+            .map(node => '(' + node.x + ', ' + node.y + ') Distance: ' + node.distance + ' Total distance: ' + node.totalDistance + '\r\n')
             .join('');
     }
 };

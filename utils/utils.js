@@ -22,7 +22,6 @@ const subMarine = {
   }
 }
 
-
 module.exports = class Utils {
   static lineReader(file, lineCallback, completeCallback) {
     const fileStream = fs.createReadStream(file);
@@ -106,3 +105,4 @@ module.exports = class Utils {
     return subMarine;
   }
 }
+

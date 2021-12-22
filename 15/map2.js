@@ -78,7 +78,7 @@ var map = {
   transformArr: function (arr, q) {
     const transformed = [];
     for (let i = 0; i < arr.length; i++) {
-      const node = arr.map(n => n)[i];
+      const node = arr.map(n => n.copy())[i];
       node.distance = this.transform(node.distance, q);
       transformed[i] = node;
     }
@@ -97,7 +97,17 @@ var map = {
       totalDistance: 99999999,
       explored: false,
       startNode: false,
-      destinationNode: false
+      destinationNode: false,
+      copy: function () {
+        return {
+          x: this.x,
+          y: this.y,
+          distance: this.distance,
+          totalDistance: this.totalDistance,
+          startNode: this.startNode,
+          destinationNode: this.destinationNode
+        };
+      }
     };
 
     this.setNode(x, y, node);

@@ -6,18 +6,15 @@ const djikstras = {
         startNode.explored = true;
         startNode.totalDistance = 0;
         startNode.distance = 0;
-        // destinationNode.distance = 0;
-        startNode.adjacentNodes.forEach(adjecent => {
-            this.estimateNode(startNode, adjecent);
-        });
-        let currentNode = this.closestAdjacent(startNode);
+
+        let currentNode = startNode;
 
         while (currentNode != destinationNode) {
             currentNode.adjacentNodes.forEach(adjecent => {
                 this.estimateNode(currentNode, adjecent);
             });
 
-            const next = this.closestAdjacent(currentNode) || this.estimatedNodes.pop();
+            const next = this.estimatedNodes.pop();
             this.exploreNode(next);
             currentNode = next;
         }
@@ -45,18 +42,6 @@ const djikstras = {
     },
     exploreNode: function (node) {
         node.explored = true;
-        this.estimatedNodes.splice(this.estimatedNodes.indexOf(node), 1);
-    },
-    closestAdjacent(node) {
-        const closest = node.adjacentNodes
-            .filter(adjacent => !adjacent.explored)
-            .sort((a, b) => a.totalDistance - b.totalDistance)[0];
-
-        if (!closest) {
-            return null;
-        }
-
-        return closest;
     },
     draw(result) {
         return result

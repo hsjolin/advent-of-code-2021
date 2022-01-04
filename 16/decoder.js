@@ -23,17 +23,17 @@ var decoder = {
     return str;
   },
   parseBinary: function () {
-    let packet = this.parseSingleBinary();
+    let packet = this.parseSinglePacket();
     const packets = [];
 
     while (packet != null) {
       packets.push(packet);
-      packet = this.parseSingleBinary();
+      packet = this.parseSinglePacket();
     }
 
     return packets;
   },
-  parseSingleBinary: function () {
+  parseSinglePacket: function () {
     let header = this.getHeader();
 
     if (header != null) {
@@ -106,7 +106,7 @@ var decoder = {
         let originalLength = length;
         let packets = [];
         while (length > 0) {
-          let packet = this.parseSingleBinary();
+          let packet = this.parseSinglePacket();
           packets.push(packet);
 
           length -= packet.header.length + packet.length;
@@ -125,7 +125,7 @@ var decoder = {
         let packets = [];
 
         for (let i = 0; i < numberOfPackets; i++) {
-          const packet = this.parseSingleBinary();
+          const packet = this.parseSinglePacket();
           length += packet.length + packet.header.length;
           packets.push(packet);
         }
@@ -142,10 +142,6 @@ var decoder = {
     return packet;
   },
   calculatePacketValue: function (packet) {
-    if (packet.header.packetTypeId == 4) {
-      return packet.value;
-    }
-
     switch (packet.header.packetTypeId) {
       case 0:
         return packet.packets.map(p => p.value).reduce((a, b) => a + b);
@@ -155,6 +151,8 @@ var decoder = {
         return Math.min(...packet.packets.map(p => p.value));
       case 3:
         return Math.max(...packet.packets.map(p => p.value));
+      case 4:
+        return packet.value;
       case 5:
         return packet.packets[0].value > packet.packets[1].value ? 1 : 0;
       case 6:

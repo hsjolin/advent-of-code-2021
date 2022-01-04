@@ -1,78 +1,62 @@
 const utils = require('../utils/utils');
 const parseFile = utils.parseFile;
 
-// Object.defineProperty(String.prototype, 'take', {
-//   value: function (length) {
-//       let str = this.substring(0, length);
-//       this = this.substring(length);
-//       return str;
-//   }, 
-//   writable: true
-// });
-
 var decoder = {
   packets: [],
+  binaryString: '',
   load: function (file, completeCallback) {
     parseFile(file, /[A-F0-9]+/, match => {
       if (match.length != 1) {
         throw 'Invalid match ' + match
       }
 
-      this.packets = this.parse(match[0]);
+      this.binaryString = this.toBinaryString(match[0]);
+      this.packets = this.parseBinary();
     },
       () => {
         completeCallback(this);
       });
   },
-  parse: function (hexString) {
-    return this.parseBinary(this.toBinaryString(hexString));
+  read: function (num) {
+    const str = this.binaryString.substring(0, num);
+    this.binaryString = this.binaryString.substring(num);
+    return str;
   },
-  parseBinary: function (binaryString) {
-    let header = this.getHeader(binaryString);
+  parseBinary: function () {
+    let packet = this.parseSingleBinary();
     const packets = [];
 
-    while (header != null) {
-      const packet = this.getPacket(header, binaryString);
-      packet.header = header;
-      binaryString = binaryString.substring(packet.length + header.length);
+    while (packet != null) {
       packets.push(packet);
-      header = this.getHeader(binaryString);
+      packet = this.parseSingleBinary();
     }
+
     return packets;
   },
-  parseSingleBinary: function (binaryString) {
-    let header = this.getHeader(binaryString);
+  parseSingleBinary: function () {
+    let header = this.getHeader();
 
     if (header != null) {
-      const packet = this.getPacket(header, binaryString);
+      const packet = this.getPacket(header);
       packet.header = header;
+      packet.value = this.calculatePacketValue(packet);
+
       return packet;
     }
 
     return null;
   },
-  getHeader: function (string) {
-    if (string == '' || parseInt(string, 2) == 0) {
+  getHeader: function () {
+    if (this.binaryString == '' || parseInt(this.binaryString, 2) == 0) {
       return null;
     }
 
-    const packetVersion = parseInt(string.substring(0, 3), 2);
-    const packetTypeId = parseInt(string.substring(3, 6), 2);
-
-    let parse = null;
-    switch (packetTypeId) {
-      case 4:
-        parse = this.parseLiteral;
-        break;
-      default:
-        parse = this.parseOperator;
-    }
+    const packetVersion = parseInt(this.read(3), 2);
+    const packetTypeId = parseInt(this.read(3), 2);
 
     return {
-      decoder: this,
       packetTypeId,
       packetVersion,
-      parse,
       length: 6
     }
   },
@@ -83,26 +67,28 @@ var decoder = {
     }
 
     return binaryString;
-    // const toBin = (hex) => {
-    //   return (parseInt(hex, 16).toString(2)).padStart(4, '0');
-    // }
-
-    // return toBin(hexString);
   },
-  getPacket: function (header, string) {
-    return header.parse(string);
+  getPacket: function (header) {
+    switch (header.packetTypeId) {
+      case 4:
+        return this.parseLiteral();
+      default:
+        return this.parseOperator();
+    }
   },
-  parseLiteral: function (string) {
-    const str = string.substring(6);
+  parseLiteral: function () {
     let literalValue = '';
     let length = 0;
-    for (let i = 0; i < string.length; i += 5) {
-      let group = str.substring(i, i + 5);
+    let group = this.read(5);
+
+    while (true) {
       literalValue += group.substring(1);
+      length += 5;
       if (group[0] == '0') {
-        length = i + 5;
         break;
       }
+
+      group = this.read(5);
     }
 
     return {
@@ -110,45 +96,75 @@ var decoder = {
       length: length
     }
   },
-  parseOperator: function (string) {
-    let str = string.substring(6);
-    const lengthTypeId = parseInt(str[0]);
-    str = str.substring(1);
+  parseOperator: function () {
+    const lengthTypeId = parseInt(this.read(1));
+    let packet = null;
 
-    let length = 0;
-    let packets = [];
     switch (lengthTypeId) {
       case 0: {
-        length = parseInt(str.substring(0, 15), 2);
-        str = str.substring(15);
+        let length = parseInt(this.read(15), 2);
+        let originalLength = length;
+        let packets = [];
+        while (length > 0) {
+          let packet = this.parseSingleBinary();
+          packets.push(packet);
 
-        packets = this.decoder.parseBinary(str.substring(0, length));
+          length -= packet.header.length + packet.length;
+        }
 
-        return {
-          length: length + 15 + 1,
+        packet = {
+          length: originalLength + 15 + 1,
           packets,
           lengthTypeId
         }
+        break;
       }
-      case 1: { 
-        const numberOfPackets = parseInt(str.substring(0, 11), 2);
-        str = str.substring(11);
+      case 1: {
+        const numberOfPackets = parseInt(this.read(11), 2);
+        let length = 0;
+        let packets = [];
 
         for (let i = 0; i < numberOfPackets; i++) {
-          const packet = this.decoder.parseSingleBinary(str);
-          str = str.substring(packet.length + packet.header.length);
+          const packet = this.parseSingleBinary();
           length += packet.length + packet.header.length;
           packets.push(packet);
         }
 
-        return {
+        packet = {
           length: length + 12 + 1,
           packets,
           lengthTypeId
         }
+        break;
       }
     }
+
+    return packet;
   },
+  calculatePacketValue: function (packet) {
+    if (packet.header.packetTypeId == 4) {
+      return packet.value;
+    }
+
+    switch (packet.header.packetTypeId) {
+      case 0:
+        return packet.packets.map(p => p.value).reduce((a, b) => a + b);
+      case 1:
+        return packet.packets.map(p => p.value).reduce((a, b) => a * b);
+      case 2:
+        return Math.min(...packet.packets.map(p => p.value));
+      case 3:
+        return Math.max(...packet.packets.map(p => p.value));
+      case 5:
+        return packet.packets[0].value > packet.packets[1].value ? 1 : 0;
+      case 6:
+        return packet.packets[0].value < packet.packets[1].value ? 1 : 0;
+      case 7:
+        return packet.packets[0].value == packet.packets[1].value ? 1 : 0;
+      default:
+        throw 'Unknown packetTypeId: ' + packet.header.packetTypeId 
+      }
+  }
 }
 
 module.exports = decoder;

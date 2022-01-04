@@ -1,7 +1,7 @@
 const decoder = require('./decoder.js');
 
 function main() {
-  decoder.load('./16/test.txt', (data) => {
+  decoder.load('./16/input.txt', (data) => {
     draw (data.packets);
   });
 }

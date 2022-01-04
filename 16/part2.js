@@ -1,13 +1,29 @@
-const map = require('./map2.js');
-const djikstras = require('../utils/djikstras');
+const decoder = require('./decoder.js');
 
 function main() {
-  map.load('./15/input.txt', (data) => {
-    console.log(djikstras.findShortestPath({
-      startNode: data.getNode(0, 0),
-      destinationNode: data.getNode(data.map.length - 1, data.map[0].length - 1)
-    }));
+  decoder.load('./16/input.txt', (data) => {
+    draw (data.packets);
   });
+}
+
+function draw (packets) {
+  console.log('Outermost value: ' + packets[0].value);
+}
+
+function versionSum(packets) {
+  if (!packets) {
+    return 0;
+  }
+  
+  let sum = 0;
+  packets.forEach(packet => {
+    console.log(packet.header.packetVersion);
+    sum += versionSum(packet.packets);
+  });
+  
+  return sum + packets
+      .map(p => p.header.packetVersion)
+      .reduce((a, b) => a + b);
 }
 
 main();

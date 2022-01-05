@@ -104,5 +104,18 @@ module.exports = class Utils {
   static getSubmarine() {
     return subMarine;
   }
+
+  static interval (a, b, arr) {
+    if (a > b) {
+      throw 'WTF!';
+    }
+
+    if (a == b) {
+      return arr;
+    }
+
+    arr = arr || [];
+    return Utils.interval(a + 1, b, [...arr, a]);
+  }
 }
 

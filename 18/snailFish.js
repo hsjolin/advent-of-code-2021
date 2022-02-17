@@ -2,6 +2,10 @@ const utils = require('../utils/utils');
 const parseFile = utils.parseFile;
 const interval = utils.interval;
 
+const isNumeric = function (number) {
+  return !isNaN(number);
+}
+
 var snailFish = {
   numbers: [],
   sum: null,
@@ -19,22 +23,44 @@ var snailFish = {
         completeCallback(this);
       });
   },
-  run: function () {
+  run: function (step) {
     this.sum = this.numbers[0];
     for (let number of this.numbers) {
       if (number == this.sum) {
         continue;
       }
 
-      this.sum = {
-        n1: this.sum,
-        n2: number
+      const sum = {
+        left: this.sum,
+        right: number
       };
 
+      if (!isNumeric(sum.left)) {
+        sum.left.parent = sum;
+      }
+
+      if (!isNumeric(sum.right)) {
+        sum.right.parent = sum;
+      }
+      sum.toList = this.numberToList;
+      this.sum = sum;
+
       let counter = 0;
-      while (this.explodeRecursive(this.sum, 0)
-        || this.splitRecursive(this.sum)) {
-        // console.log(counter++);
+      this.lastAction = 'addition';
+      step(++counter);
+      while (true) {
+        const exploded = this.explodeRecursive(this.sum, 0);
+        const splitted = exploded || this.splitRecursive(this.sum);
+
+        if (exploded) {
+          this.lastAction = 'explode';
+        } else if (splitted) {
+          this.lastAction = 'split';
+        } else {
+          this.lastAction = 'noop';
+          break;
+        }
+        step(++counter);
       }
     }
   },
@@ -43,75 +69,70 @@ var snailFish = {
     this.string = this.string.substring(num);
     return str;
   },
-  findChild: function (number, childSelector, findCondition) {
-    const child = childSelector(number);
-
-    if (!child) {
-      return null;
-    }
-
-    if (findCondition(child)) {
-      return child;
-    }
-
-    return this.findChild(child, childSelector, findCondition);
-  },
-  findClosest: function (number, left) {
-    if (!number) {
-      return null;
-    }
+  numberToList: function () {
+    const list = [];
+    const number = this;
     
-    let parent = number.parent;
-
-    while (parent) {
-      const child = left ? parent.n1 : parent.n2;
-      if (!isNaN(child)) {
-        return child;
-      } else {
-        const childChild = this.findChild(parent, 
-          p => left ? p.n1 : p.n2, 
-          p => left ? !isNaN(p.n2) : !isNaN(p.n1));
-        
-        if (childChild && child != childChild) {
-          return left 
-            ? childChild.n2
-            : childChild.n1;
-        }
-      }
-      parent = parent.parent;
+    if (!isNumeric(number.left)) {
+      list.push(...number.left.toList());
     }
 
-    return null;
+    list.push(number);
+    
+    if (!isNumeric(number.right)) {
+      list.push(...number.right.toList());
+    }
+
+    return list;
   },
   explode: function (number) {
-    const numberToLeft = this.findClosest(number, true);
-    if (numberToLeft) {
-      numberToLeft.n1 += number.n1;
+    const list = this.sum.toList();
+    const index = list.indexOf(number);
+
+    for (let i = index - 1; i >= 0; i--) {
+      const node = list[i];
+      if (isNumeric(node.right)) {
+        node.right += number.left;
+        break;
+      }
+      if (isNumeric(node.left)) {
+        node.left += number.left;
+        break;
+      }
     }
 
-    const numberToRight = this.findClosest(number, false);
-    if (numberToRight) {
-      numberToRight.n2 += number.n2;
+    for (let i = index + 1; i < list.length; i++) {
+      const node = list[i];
+      if (isNumeric(node.left)) {
+        node.left += number.right;
+        break;
+      }
+      if (isNumeric(node.right)) {
+        node.right += number.right;
+        break;
+      }
     }
 
-    if (number.parent.n1 == number) {
-      number.parent.n1 = 0;
+    if (number.parent.left == number) {
+      number.parent.left = 0;
     } else {
-      number.parent.n2 = 0;
+      number.parent.right = 0;
     }
   },
   split: function (number, left) {
     if (left) {
-      number.n1 = {
-        n1: Math.floor(number.n1 / 2),
-        n2: Math.ceil(number.n1 / 2),
-        parent: number
+      number.left = {
+        left: Math.floor(number.left / 2),
+        right: Math.ceil(number.left / 2),
+        parent: number,
+        toList: this.numberToList
       };
     } else {
-      number.n2 = {
-        n1: Math.floor(number.n2 / 2),
-        n2: Math.ceil(number.n2 / 2),
-        parent: number
+      number.right = {
+        left: Math.floor(number.right / 2),
+        right: Math.ceil(number.right / 2),
+        parent: number,
+        toList: this.numberToList
       };
     }
   },
@@ -120,18 +141,18 @@ var snailFish = {
       return false;
     }
 
-    if (number.n1 > 10) {
+    if (number.left >= 10) {
       this.split(number, true);
       return true;
     }
 
-    if (number.n2 > 10) {
+    if (number.right >= 10) {
       this.split(number, false);
       return true;
     }
 
-    return this.splitRecursive(number.n1)
-      || this.splitRecursive(number.n2);
+    return this.splitRecursive(number.left)
+      || this.splitRecursive(number.right);
     ;
   },
   explodeRecursive(number, nesting) {
@@ -144,8 +165,8 @@ var snailFish = {
       return true;
     }
 
-    return this.explodeRecursive(number.n1, nesting + 1)
-      || this.explodeRecursive(number.n2, nesting + 1);
+    return this.explodeRecursive(number.left, nesting + 1)
+      || this.explodeRecursive(number.right, nesting + 1);
   },
   parse: function () {
     if (this.string.length == 0) {
@@ -166,22 +187,24 @@ var snailFish = {
     let char = this.read(1);
 
     if (char == '[') {
-      pair.n1 = this.parse();
-      pair.n1.parent = pair;
+      pair.left = this.parse();
+      pair.left.parent = pair;
     } else {
-      pair.n1 = parseNumber();
+      pair.left = parseNumber();
     }
 
     char = this.read(1);
 
     if (char == '[') {
-      pair.n2 = this.parse();
-      pair.n2.parent = pair;
+      pair.right = this.parse();
+      pair.right.parent = pair;
     } else {
-      pair.n2 = parseNumber();
+      pair.right = parseNumber();
     }
 
     this.read(1);
+    pair.toList = this.numberToList;
+
     return pair;
   }
 }

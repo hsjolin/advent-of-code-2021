@@ -2,7 +2,7 @@ const snailFish = require('./snailFish.js');
 const interval = require('../utils/utils').interval;
 
 function main() {
-  snailFish.load('./18/input.txt', (data) => {
+  snailFish.load('./18/test.txt', (data) => {
     draw (data);
   });
 }

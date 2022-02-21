@@ -1,6 +1,5 @@
 const utils = require('../utils/utils');
 const parseFile = utils.parseFile;
-const interval = utils.interval;
 
 const isNumeric = function (number) {
   return !isNaN(number);
@@ -30,10 +29,11 @@ var snailFish = {
         continue;
       }
 
-      const sum = {
-        left: this.sum,
-        right: number
-      };
+      const sum = this.createNumber(
+        this.sum,
+        number,
+        null
+      );
 
       if (!isNumeric(sum.left)) {
         sum.left.parent = sum;
@@ -42,7 +42,6 @@ var snailFish = {
       if (!isNumeric(sum.right)) {
         sum.right.parent = sum;
       }
-      sum.toList = this.numberToList;
       this.sum = sum;
 
       let counter = 0;
@@ -69,6 +68,29 @@ var snailFish = {
     this.string = this.string.substring(num);
     return str;
   },
+  createNumber: function (left, right, parent) {
+    return {
+      left: left,
+      right: right,
+      parent: parent,
+      // toList: this.numberToList,
+      isParentOf: this.isParentOf,
+      closestToLeft: this.closestToLeft,
+      closestToRight: this.closestToRight,
+      closestChildLeft: this.closestChildLeft,
+      closestChildRight: this.closestChildRight
+    };
+  },
+  isParentOf: function (number) {
+    if (!number.parent) {
+      return false;
+    }
+    if (number.parent == this) {
+      return true;
+    }
+
+    return this.isParentOf(number.parent);
+  },
   numberToList: function () {
     const list = [];
     const number = this;
@@ -85,31 +107,66 @@ var snailFish = {
 
     return list;
   },
-  explode: function (number) {
-    const list = this.sum.toList();
-    const index = list.indexOf(number);
+  closestToLeft: function (child) {
+    if (isNumeric(this.left)) {
+      return this;
+    }
 
-    for (let i = index - 1; i >= 0; i--) {
-      const node = list[i];
-      if (isNumeric(node.right)) {
-        node.right += number.left;
-        break;
-      }
-      if (isNumeric(node.left)) {
-        node.left += number.left;
-        break;
+    if (this.left != child) {
+      return this.left.closestChildRight(); 
+    }
+
+    if (this.parent) {
+      return this.parent.closestToLeft(this);
+    }
+
+    return null;
+  },
+  closestToRight: function (child) {
+    if (isNumeric(this.right)) {
+      return this;
+    }
+
+    if (this.right != child) {
+      return this.right.closestChildLeft(); 
+    }
+
+    if (this.parent) {
+      return this.parent.closestToRight(this);
+    }
+
+    return null;
+  },
+  closestChildRight: function () {
+    if (isNumeric(this.right)) {
+      return this;
+    }
+
+    return this.right.closestChildRight();
+  },
+  closestChildLeft: function () {
+    if (isNumeric(this.left)) {
+      return this;
+    }
+
+    return this.left.closestChildLeft();
+  },
+  explode: function (number) {
+    const closestToLeft = number.parent.closestToLeft(number);
+    if (closestToLeft) {
+      if (closestToLeft.isParentOf(number)) {
+        closestToLeft.left += number.left;
+      } else {
+        closestToLeft.right += number.left;
       }
     }
 
-    for (let i = index + 1; i < list.length; i++) {
-      const node = list[i];
-      if (isNumeric(node.left)) {
-        node.left += number.right;
-        break;
-      }
-      if (isNumeric(node.right)) {
-        node.right += number.right;
-        break;
+    const closestToRight = number.parent.closestToRight(number);
+    if (closestToRight) {
+      if (closestToRight.isParentOf(number)) {
+        closestToRight.right += number.right;
+      } else {
+        closestToRight.left += number.right;
       }
     }
 
@@ -121,32 +178,30 @@ var snailFish = {
   },
   split: function (number, left) {
     if (left) {
-      number.left = {
-        left: Math.floor(number.left / 2),
-        right: Math.ceil(number.left / 2),
-        parent: number,
-        toList: this.numberToList
-      };
+      number.left = this.createNumber(
+        Math.floor(number.left / 2),
+        Math.ceil(number.left / 2),
+        number
+      ); 
     } else {
-      number.right = {
-        left: Math.floor(number.right / 2),
-        right: Math.ceil(number.right / 2),
-        parent: number,
-        toList: this.numberToList
-      };
+      number.right = this.createNumber(
+        Math.floor(number.right / 2),
+        Math.ceil(number.right / 2),
+        number
+      );
     }
   },
   splitRecursive(number) {
-    if (!isNaN(number)) {
+    if (isNumeric(number)) {
       return false;
     }
 
-    if (number.left >= 10) {
+    if (isNumeric(number.left) && number.left >= 10) {
       this.split(number, true);
       return true;
     }
 
-    if (number.right >= 10) {
+    if (isNumeric(number.right) && number.right >= 10) {
       this.split(number, false);
       return true;
     }
@@ -156,11 +211,11 @@ var snailFish = {
     ;
   },
   explodeRecursive(number, nesting) {
-    if (!isNaN(number)) {
+    if (isNumeric(number)) {
       return false;
     }
 
-    if (nesting == 4) {
+    if (nesting >= 4 && isNumeric(number.left) && isNumeric(number.right)) {
       this.explode(number);
       return true;
     }
@@ -183,7 +238,7 @@ var snailFish = {
       return parseInt(numberString);
     };
 
-    const pair = {};
+    const pair = this.createNumber(null, null, null);
     let char = this.read(1);
 
     if (char == '[') {
@@ -203,7 +258,6 @@ var snailFish = {
     }
 
     this.read(1);
-    pair.toList = this.numberToList;
 
     return pair;
   }
